@@ -10,7 +10,7 @@ services:
     networks:
       - slack_network
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -53,6 +53,37 @@ services:
       - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+
+  auth-service:
+    build: ./services/auth
+    container_name: slack-auth-service
+    restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./services/auth/src
+          target: /app/src
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./services/auth/package.json
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://slack_user:slack_password@postgres:5432/slack
+      - JWT_SECRET=your-secret-key
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - slack_network
+    # volumes:
+    #   - ./services/auth:/app
+    #   - /app/node_modules
+    command: npm run dev
 
 networks:
   slack_network:

@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 import {
   RegisterRequest,
   LoginRequest,
@@ -8,9 +8,9 @@ import {
 } from "../types";
 import { hashPassword, comparePassword } from "../utils/password";
 import { generateToken } from "../utils/jwt";
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prisma";
 
-const toSafeUser = (user: User): UserResponse => {
+export const toSafeUser = (user: User): UserResponse => {
   const {
     passwordHash,
     resetToken,

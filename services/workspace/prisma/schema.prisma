@@ -1,3 +1,13 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
 model Workspace {
   id          String   @id @default(cuid())
   name        String
@@ -8,6 +18,12 @@ model Workspace {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  members     WorkspaceMember[]
+  channels    Channel[]
+
+  @@index([slug])
+  @@index([ownerId])
 }
 
 model Channel {
@@ -21,6 +37,13 @@ model Channel {
   isArchived  Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members     ChannelMember[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+  @@index([creatorId])
 }
 
 model WorkspaceMember {
@@ -29,8 +52,13 @@ model WorkspaceMember {
   userId      String
   role        WorkspaceRole @default(MEMBER)
   joinedAt    DateTime @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   
   @@unique([workspaceId, userId])
+  @@index([userId])
+  @@index([workspaceId])
 }
 
 enum WorkspaceRole {
@@ -47,19 +75,14 @@ model ChannelMember {
   joinedAt  DateTime @default(now())
   
   
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
   @@unique([channelId, userId])
+  @@index([userId])
+  @@index([channelId])
 }
 
 enum ChannelRole {
   ADMIN
   MEMBER
-}
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
